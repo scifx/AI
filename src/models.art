@@ -1,0 +1,55 @@
+models:function [null][
+    online:false
+
+    api_addr: "http://localhost:11434/v1"
+    api_key: "ollama"
+
+    ;切换线上模型
+    if? attr? "online" [
+        online:attrs\online
+    ]
+
+    ;自定义api_addr
+    if? attr? "api_addr" [
+        api_addr: attr "api_addr"
+    ]
+
+    ;自定义apikey
+    if? attr? "apikey" [
+        api_key: attr "apikey"
+    ]
+
+    ;切换线上模型
+    ; print online
+
+    ;获取环境变量的api地址和key
+    if? online [
+        api_addr: env\OPENAI_API_BASE
+        api_key: env\OPENAI_API_KEY
+        online:false
+    ]
+
+    ;生成api_base和请求头字符串
+    api_base:api_addr ++ "/models"
+    header: #[ "Accept":"application/json" "Content-Type":"application/json" "Authorization":~"Bearer |api_key|" ]
+    
+
+    ;http—get请求
+    response: request.get .headers: header .json api_base #[]
+    print response
+    
+    ;提取body元素并且应用map过滤，保留id字段
+    temp:read.json response\body
+    model_list:temp\data
+    model_names: map temp\data 'x -> x\id | sort
+    
+    ;输出模型数量，和具体模型名称
+    print ["\nModels_count:" size model_names "\n"]
+    loop model_names => print
+
+    ; return model_names
+
+]
+
+; getmodels .online []
+; modules:getmodels []

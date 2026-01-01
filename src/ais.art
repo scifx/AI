@@ -1,0 +1,85 @@
+import ./{ai}!
+;翻译成英文
+english: function [ msg ][
+return ai.sys: "You are a professional English translator, please give the meaning of the translated word or sentence directly, do not answer any questions, do not give any explanations. Remember that you only need to translate any message into English.Don't do more!"
+msg
+]
+
+;翻译成中文
+chinese: function [ msg ][
+return ai.sys: "你是一个专业的中文翻译，请你直接给出翻译后的单词或句子的意思，不要回答任何问题，不作任何解释。记住你只需把任何信息翻译成中文。"
+msg
+]
+
+;深度理解
+explain: function [ msg ][
+return ai.sys:"你是一个知识理解的专家，请你仔细分析信息，解释一下其表达的内容和含义，做语义剖析，不拘泥于字面意思，探索找到其真正表达的意思，并用简单易懂的语言表述出来。可以理解为翻译大白话"
+msg
+]
+
+;表述深化
+expand: function [ msg ][
+return ai.sys:"你是一个表述理解的专家（心灵术士），请你仔细分析信息，不拘泥于字面意思，做语义剖析，探索找到其真正表达的意思，并用简单易懂的语言再阐述表述一遍出来。可以理解为心灵翻译大白话。永远不要答复信息提到的问题，你只是扩充问题"
+msg
+]
+
+;内容总结
+sumup: function [ msg ][
+return ai .sys: "你是一个内容总结专家，请你仔细分析信息，根据其表达的内容和含义，用简单精炼易懂的一句话总结概况其重点。"
+msg
+] 
+
+;逻辑推理
+infer: function [ msg ][
+return ai.sys:"你是一个逻辑推理专家，请你仔细分析信息，根据其表达的内容和含义，定义问题的核心，提出推理方法，并明确地一步步给出推理的步骤，并反复验证正确性，最后直到得出有效的结论。（必须在最后面写下你的最终结论。）"
+msg
+]
+
+;数学计算
+mathsolver: function [ msg ][
+return ai.sys:"你是一个数学专家，请你仔细分析信息，根据其表达的内容和含义，提出数学推理方法，需明确地一步步给出计算的步骤，并反复验证正确性，最后直到得出有效的结论"
+msg
+]
+
+;计划
+plan: function [ msg ][
+return ai.sys:"你是一个计划专家，请你仔细分析需求信息，根据其表达的内容和含义，提取规划要点并提出规划方法，解决提出的需求。最后给出计划方案，方案需明确地一步步列出你的规划步骤。"
+msg
+]
+
+;内容提取
+concise: function [ msg ][
+return ai.sys:"你是一个内容提取专家，请你仔细分析信息，严格遵照原文信息，把最终结论部分提取出来。如果内容没有结论部分，请你分析原文把主题浓缩概况，用简单精炼易懂的方式提取信息的重点。"
+msg
+] 
+
+;内容判断
+codi: function [ input ] [
+    reason: ai.model:"qwen3:1.7b" input
+    p:
+    {:
+    你是一个AI实现的IF逻辑条件判断模块，模拟if的逻辑功能，负责分析问题和答案，根据回答提供的信息判断问题是否成立，以json的格式返回逻辑判断的结果。如果信息里的回答符合问题的条件就返回true，不符合返回false。
+    请根据以上的问题和答案，根据回答信息的最终结论部分，判断问题是否成立，成立返回true，否则false。
+    注意：不确定结论的，一律判做不成立。需严格按照回答上下文判断最终结果，不得私自判断
+    输出格式为：
+    {reson:<判断原因>,result:<true/false>}
+    :}
+    data: render
+    {:
+    问题:
+    |input|
+
+    回答:
+    |reason|
+
+    请根据以上的问题和答案，根据回答信息的最终结论部分，判断问题是否成立，成立返回true，否则false。
+    注意：不确定结论的，一律判做不成立。需严格按照回答上下文判断最终结果，不得私自判断
+    输出格式为：
+    {reson:<判断原因>,result:<true/false>}
+    :}
+    print data
+    f: read.json "if.json"
+    r: read.json ai.sys:p .format:f .model:"qwen3:1.7b" to :string data
+    print r
+    return r\result
+]

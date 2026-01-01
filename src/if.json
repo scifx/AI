@@ -1,0 +1,27 @@
+{
+    "type": "json_schema",
+    "json_schema": {
+      "name": "ai_judgment_schema",
+      "description": "你是一个分类器API的函数，需要根据问题，得出明确结论，true表示肯定，false表示否定",
+      "strict": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "判断原因"
+          },
+          "result": {
+            "type": "boolean",
+            "description": "判断结果，true表示肯定，false表示否定"
+          }
+        },
+        "required": [
+          "reason",
+          "result"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+  

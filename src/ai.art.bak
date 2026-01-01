@@ -1,0 +1,189 @@
+ai: function [ msg ][
+
+online:false
+history_file:null
+history:[]
+tools_list:[]
+format:{}
+
+user_input:msg
+
+addon: #[]
+
+;初始值
+sys:""
+api_addr: "http://localhost:11434/v1"
+api_key: "ollama"
+chat_model: "qwen3:4b"
+img_model:"qwen2.5vl:3b"
+
+if? attr? "online" [
+    online: attr "online"
+]
+
+;切换线上模型
+if? online [
+    api_addr: env\OPENAI_API_BASE
+    api_key: env\OPENAI_API_KEY
+    chat_model: "fireworks::accounts/fireworks/models/deepseek-v3-0324"
+    img_model: "fireworks::accounts/fireworks/models/qwen2p5-vl-32b-instruct"
+    online:false
+]
+
+api_base: ~"|api_addr|/chat/completions"
+
+;系统提示词
+if? attr? "sys" [
+    sys: attr "sys"
+]
+
+;自定义api_addr
+if? attr? "api_addr" [
+    api_addr: attr "api_addr"
+]
+
+;自定义apikey
+if? attr? "apikey" [
+    api_key: attr "apikey"
+]
+
+; kw: [ "sys" "api_addr" "apikey"]
+; count: 0 .. (sub size kw 1)
+; loop count 'x [
+;     if attr? kw\[x] [
+;         let kw\[x] ( attr kw\[x] )
+;     ]
+; ]
+
+;自定义模型
+if? attr? "model" [
+    chat_model: attr "model"
+    img_model: chat_model
+]
+
+;工具
+if? attr? "tools" [
+    tools_list: attr "tools"
+    addon: #[ tools:tools_list ]
+]
+
+;格式化输出
+if? attr? "format" [
+    format: attr "format"
+    addon: #[ response_format:format ]
+]
+
+if? attr? "img" [
+    chat_model: img_model
+    imgb:to :string encode read attr "img"
+    ; imgb:"image"
+    user_input:
+    @[
+        #[ type:"text" text:msg ]
+        #[
+            type:"image_url"
+            image_url:
+            #[
+                url: render {data:image/png;base64,|imgb|}
+            ]
+        ]
+    ]
+]
+
+if? attr? "history" [
+    history_name: attr "history"
+    history_file: store.json history_name
+    try [
+        history:history_file\history
+    ]
+]
+
+content:[
+    #[role:"system" content:sys]
+    #[role:"user" content:user_input]
+]
+
+msgs: @history ++ @ content
+; msg: @content
+
+; inspect msg
+data:
+#[
+    model:chat_model
+    messages: msgs
+    stream:false
+]
+
+'data: extend data addon
+
+
+header: #[ "Accept":"application/json" "Content-Type":"application/json" "Authorization":~"Bearer |api_key|" ]
+
+; print api_base
+; print chat_model
+
+respones: request.post .headers: header .json api_base data
+temp: read.json respones\body
+
+result: temp\choices\0\message\content
+
+
+if? tools_list <> [] [
+    functions: temp\choices\0\message\tool_calls 
+    result: map functions 'x -> x\function
+    result: fn result
+    tools_list:false
+]else[
+    if contains?.at:0 result "<think>" [
+        temp: split.by:"</think>"  result
+        result: temp\1
+    ]
+]
+
+'result.strip
+
+
+if? not? null? history_file[
+'history ++ @[ #[ role:"user" content: msg ] #[ role:"assistant" content: result ] ]
+history_file\history: history
+]
+
+return result
+]
+
+get_weather: function [ arguments ] [ temp: read.json arguments return ~"|temp\location| is sunny" ]
+
+; 备注 fn_tools: #[ get_weather: 'get_weather ]
+
+fn: function [ input ] [
+    out:[]
+    loop input 'x [
+        ;备注 call fn_tools\[x\name] @[ x\arguments ]
+        fn_temp: var x\name
+        element: get @[ fn_temp x\arguments ] 0
+        ; print element
+        'out ++ element
+    ]
+    return out
+]
+
+; data: ai.online .history:"history.json" "简要说明"
+; data: ai.model:"gemma3:4b" "你是谁？"
+; data: ai.online .history:"history.json" "你是谁？"
+; data: ai.online.model:"fireworks::accounts/fireworks/models/deepseek-r1" .history:"history.json" "你是谁？"
+; data: ai.online .history:"history.json" .img:"D:/Desktop/test.png" "你看到了什么？"
+; write.json data "test.json"
+; print data
+
+;工具调用
+; tool: read.json "tools.json"
+; output: ai.tools:tool .online "广州和北京的天气如何？"
+; print type output
+; print output
+; print output\0
+
+;格式化输出
+; formats: read.json {:{"type": "json_object"}:}
+; formats: #[type:"json_object"]
+; data: ai.format:formats "你是谁？"
+; print data

@@ -1,0 +1,19 @@
+data:[
+    #[
+        type: "function",
+        function: directionary [
+            name: "get_weather"
+            description: "获取天气"
+            parameters: directionary[
+                type: "object"
+                properties: directionary[
+                    location: directionary [
+                        type: "string"
+                ]
+                ]
+                required: ["location"]
+            ]
+        ]
+    ]
+]
+write data "weather.json"
